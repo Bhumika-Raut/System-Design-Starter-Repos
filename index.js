@@ -17,9 +17,10 @@ const incident = {
   title: 'Checkout latency spike after deploy v18.4',
   currentSeverity: 'MEDIUM',
   service: 'payments',
-  reporterEmail: 'oncall@acme.example',   // private — do NOT send to the model
-  internalToken: 'tok_secret_do_not_send' // private — do NOT send to the model
+  reporterEmail: 'oncall@acme.example',
+  internalToken: 'tok_secret_do_not_send'
 };
+
 const timeline = [
   'Deploy v18.4 completed for payments',
   'Error rate rising in payments-checkout',
@@ -33,10 +34,20 @@ const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 // 'badEnum'-> an unknown severity ("URGENT")
 // 'failed' -> the model failed (returns null)
 const MODE = 'valid';
+
 function fakeModel() {
   if (MODE === 'failed') return null;
-  if (MODE === 'badEnum') return { suggestedSeverity: 'URGENT', reason: 'errors rising' };
-  return { suggestedSeverity: 'HIGH', reason: 'errors rising after v18.4' };
+  if (MODE === 'badEnum') {
+    return {
+      suggestedSeverity: 'URGENT',
+      reason: 'errors rising'
+    };
+  }
+
+  return {
+    suggestedSeverity: 'HIGH',
+    reason: 'errors rising after v18.4'
+  };
 }
 
 // ============================================================
@@ -45,8 +56,10 @@ function fakeModel() {
 // ============================================================
 function buildContext() {
   return {
-    // fill this in: title, currentSeverity, service, timeline...
-    // but NOT reporterEmail or internalToken
+    title: incident.title,
+    currentSeverity: incident.currentSeverity,
+    service: incident.service,
+    timeline: timeline
   };
 }
 
@@ -56,7 +69,12 @@ function buildContext() {
 // AND there is a non-empty reason.
 // ============================================================
 function isValid(answer) {
-  return false; // fill this in
+  return (
+    answer &&
+    SEVERITIES.includes(answer.suggestedSeverity) &&
+    typeof answer.reason === 'string' &&
+    answer.reason.trim().length > 0
+  );
 }
 
 // ============================================================
@@ -64,7 +82,10 @@ function isValid(answer) {
 // Return a short message so the workflow still makes sense.
 // ============================================================
 function fallback() {
-  return { status: 'MANUAL_REVIEW', message: '' /* fill this in */ };
+  return {
+    status: 'MANUAL_REVIEW',
+    message: 'AI suggestion could not be trusted. Please review the incident manually.'
+  };
 }
 
 // ── Given to you: runs one request start to finish. ──
